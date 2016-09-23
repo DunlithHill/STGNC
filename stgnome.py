@@ -23,7 +23,7 @@ GitHub Named Organization Member Enforcer (GNOME)
 """
 
 g_sUsage = """    Usage: stgnome.py org={organization} at={access token} bucket={S3 bucket} 
-        [help list all]
+        [help mail all list]
 """ 
 
 g_sHelp = """
@@ -32,9 +32,9 @@ g_sHelp = """
         at=<token>        GitHub personal access token
 
     Optional Arguments
+        help              Print this information
         bucket=<name>     Specify an S3 bucket (no upload if missing)
         mail              Email a notice to users with profile problems
-        help              Print this information
         all               List all organization members 
         list              List members with profile problems
 """
@@ -78,19 +78,19 @@ def getCommandLineArgs():
 # ----- Console Reporting Functions -----
 
 def listPrepare():
-    if g_aArgs.get('list', None):						# Header for the users with profile problems list
-        print '    Members with Incomplete Profiles (login, email)'
-        print '    -----------------------------------------------'
-    elif g_aArgs.get('all', None):						# Header for the organization member list
+    if g_aArgs.get('all', None):						# Header for the organization member list
         print '    Organization Members (login, name, email)'
         print '    -----------------------------------------'
+    elif g_aArgs.get('list', None):						# Header for the users with profile problems list
+        print '    Members with Incomplete Profiles (login, email)'
+        print '    -----------------------------------------------'
 
 
 def listProcess(oUser):
-    if g_aArgs.get('list', None):						# Row for the users with profile problems list
-        print '    {0:20s}{1}'.format(oUser['login'], oUser['name'], oUser['email'])
-    elif g_aArgs.get('all', None):						# Row for the organization member list
+    if g_aArgs.get('all', None):						# Row for the organization member list
         print '    {0:20s}{1:20s}{2}'.format(oUser['login'], oUser['name'], oUser['email'])
+    elif g_aArgs.get('list', None):						# Row for the users with profile problems list
+        print '    {0:20s}{1}'.format(oUser['login'], oUser['name'], oUser['email'])
 
 
 def listFinalize():
