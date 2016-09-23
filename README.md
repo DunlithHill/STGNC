@@ -57,9 +57,9 @@ arguments.
 
 Position | Argument | Description
 ---------|----------|------------
-1 | {org} | (Required) The URL-friendly name of the GitHub organization
-2 | {token} | (Required) Your personal access token as an organization administrator
-3 | {cmd} | The optional commands, **list** and **all**, which list, respectively, users with missing profile information or all members on the console.
+1 | {org} | (Required) The URL-friendly name of the GitHub organization.
+2 | {token} | (Required) Your GitHub **personal access token** (Your account should be an organization administrator).
+3 | {cmd} | The optional commands, **list** and **all**, which list, respectively, users with missing profile information or all members o f the organization on the console.
 
 #### Dependencies and Installation Notes
 * **Linux** (It might be interesting to see what can be done with the Linux subsystem in the Windows 10 Anniversary Update (1607).)
@@ -70,9 +70,9 @@ Position | Argument | Description
 * **AWSCLI** - The Amazon Web Service Command Line Interface tools [*sudo pip install awscli --ignore-installed six*].
 * **msmtp** - A small but powerful SMTP client. [*sudo apt-get install msmtp ca-certificates*]. (See [Stack Overflow](http://stackoverflow.com/questions/16756305/how-to-configure-msmtp-with-amazon-ses) for guidance on configuring msmtp to use AWS SES.)
 
-The committed code has both email notification and the call to copy the list 
-of uses to AWS S3 commented out. The last three dependencies can be ommitted 
-to test the script's interactions wtih GitHub.
+The committed Bash script has both email notification and the call to copy the 
+list of users to AWS S3 commented out. If that code is commented out, the last 
+three dependencies can be ommitted to test the script's interactions wtih GitHub.
 
 The S3 bucket name is declared on line 7 of the script. It should be changed 
 if the S3 upload capabilites are enabled.
@@ -85,14 +85,64 @@ from any suitable directory.
 
 ## STGNOME - Python
 #### Usage
-The Python program (stgnome.py) has two required and one optional positional
-arguments.
+The Python program (stgnome.py) has two required and several optional arguments.
 
-    ./stgnome.sh {org} {token} ['list' | 'all']
+    python stgnome.py org={organization} at={access token} bucket={S3 bucket}[help list all mail]
 
-Position | Argument | Description
----------|----------|------------
-1 | {org} | The URL-friendly name of the GitHub organization
-2 | {token} | Your personal access token as an organization administrator
-3 | {cmd} | The optional commands, **list** and **all**, which list, respectively, users with missing profile information or all members on the console.
+Argument | Mode |Description
+---------|------|------------
+org={organization} | **Required** | The URL-friendly name of the GitHub organization.
+at={access token} | **Required** | Your GitHub **personal access token** (Your account should be an organization administrator).
+bucket={S3 bucket} | Optional | The name of the S3 bucket to which the CSV list of users with profile problems will be written.
+mail | Optional | If specified, an email notice will be sent to each user with profile problems.
+list | Optional | List only the users with missing profile information on the console.
+all | Optional | List all members of the organization on the console.
+
+Notes:
+* Arguments may be specified in any order. 
+* If the **bucket=** argument is omitted, no data will be written to S3.
+* If the **mail** argument is omitted, no email notifications will be sent to users with profile problems.
+* **list** is a subset of **all**. Specifying both arguments is equivalent to specifying **all** (that is, **list** is ignored).
+
+#### Dependencies and Installation Notes
+* **Python 2.7+** - The code was developed and tested on Python 2.7
+* **pip** - The Python package installer [*sudo apt-get install python-pip*].
+* **requests** module - [*pip install requests*]
+* **boto3** module - The S3 Python API [*pip install boto3*]
+
+This program uses system calls to interact with the host's SMTP client.
+It assumes **msmtp** is available for that purpose. See the Bash script
+dependencies for information on installing and configuring msmtp.
+
+## Discussion
+#### Approach
+* The general approach was start with the simplest possible solution (hence the Bash script).
+* Consistent with that approach, neither implementation makes any attempt to handle large datasets. That is, basic buffers and collections are assumed to have ample space for retreived data and that no GitHub responses would required handling paged data.
+* While the Python implemenation has some generalization, the task was constrained enough that there was little scope for further generalization.
+* While the Bash script is limited to Linux (and perhaps Windows 10) hosts, the Python code should run on multiple platforms. The biggest issue in the latter case would be the specifics of configuring and interacting with an SMTP client on each platform. 
+
+#### Security 
+Passing the GitHub personal access token as an argument is sufficient if the host system is secure 
+(a questionable assumption). It would be more consistent with standard practice to store the token
+as an environment variable (which would require an additional configuration step). We could also 
+improve our security by storing the token in an encrypted file, accessed either directly (via the 
+Python program) or indirectly (invoking a utility in the Bash script), so the token isn't available 
+as plain text in the system. 
+
+The AWS credentials are stored in the environment where they can be access by both applications and the
+AWS CLI tools. Again, this assumes the host is secure.
+
+Of course, if we want other users to be able to authorize the application to use their account, 
+GitHub requires us to implement the [OAuth2 Protocol](https://developer.github.com/v3/oauth/). This 
+requires registering the application with GitHub, and implementing a web protocol with a series of 
+redirects.
+
+## Coding Conventions
+In brief:
+
+* Vertical Whitespace - Use single blank lines to separate logical blocks of code within functions. Typically each such block will begin with a comment, indented to match the following block. Use two blank lines between functions to help visually separate them from one another.
+* Horizontal Whitespace - Use whitespace within statements using the same style as normal English.
+* Names - Use a single character type prefix for variable names (e.g., s = string, a=array, o=object; this is helpful in an untyped language like Python).
+* Names and comments - Prefer full words over contractions
+* Comments - Use vertically aligned (col 57) end-of-line comments to decribe structures and complex code.
 
